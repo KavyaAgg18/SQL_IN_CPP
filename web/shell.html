@@ -1,0 +1,198 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>SQL Parser</title>
+  <style>
+    :root {
+      --bg: #0b0f10;
+      --panel: #0f1517;
+      --text: #d7e8de;
+      --muted: #87a095;
+      --accent: #44b97f;
+      --border: #1e2b2f;
+      --input-bg: #121a1d;
+    }
+
+    html,
+    body {
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      height: 100%;
+      background: radial-gradient(circle at top right, #153228, var(--bg) 40%);
+      color: var(--text);
+      font-family: "Consolas", "Courier New", monospace;
+    }
+
+    .app {
+      max-width: 980px;
+      margin: 0 auto;
+      padding: 16px;
+      height: 100%;
+      box-sizing: border-box;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .disclaimer {
+      position: fixed;
+      left: 16px;
+      top: 42%;
+      width: 220px;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.4;
+      user-select: none;
+      pointer-events: none;
+    }
+
+    .title {
+      color: var(--muted);
+      font-size: 13px;
+      letter-spacing: 0.4px;
+    }
+
+    #terminal {
+      flex: 1;
+      margin: 0;
+      padding: 12px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      background: linear-gradient(180deg, #0a0f11, var(--panel));
+      overflow-y: auto;
+      white-space: pre-wrap;
+      word-break: break-word;
+      line-height: 1.35;
+      font-size: 14px;
+    }
+
+    .input-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .prompt {
+      color: var(--accent);
+      font-weight: 700;
+    }
+
+    #stdin {
+      flex: 1;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 10px 12px;
+      background: var(--input-bg);
+      color: var(--text);
+      font-family: inherit;
+      font-size: 14px;
+      outline: none;
+    }
+
+    #stdin:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 2px rgba(68, 185, 127, 0.2);
+    }
+
+    .help {
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    @media (max-width: 640px) {
+      .disclaimer {
+        position: static;
+        width: auto;
+        padding: 10px;
+      }
+
+      .app {
+        padding: 10px;
+      }
+
+      #terminal {
+        font-size: 13px;
+      }
+
+      #stdin {
+        font-size: 13px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="disclaimer">Disclaimer: The parser will run after a database is selected.</div>
+  <div class="app">
+    <div class="title">SQL Parser</div>
+    <pre id="terminal"></pre>
+    <div class="input-row">
+      <span class="prompt">&gt;</span>
+      <input id="stdin" type="text" autocomplete="off" placeholder="Type input and press Enter" />
+    </div>
+    <div class="help">Press Enter to send one input line to the C++ program stdin.</div>
+  </div>
+
+  <script>
+    (function () {
+      var inputQueue = [];
+      var waiters = [];
+
+      function getTerminal() {
+        return document.getElementById("terminal");
+      }
+
+      window.appendTerminalText = function appendTerminalText(text) {
+        var term = getTerminal();
+        if (!term) return;
+        term.textContent += text;
+        term.scrollTop = term.scrollHeight;
+      };
+
+      window.consumeInputLine = function consumeInputLine(value) {
+        if (waiters.length > 0) {
+          var resolve = waiters.shift();
+          resolve(value);
+          return;
+        }
+        inputQueue.push(value);
+      };
+
+      window.awaitInputLine = function awaitInputLine() {
+        return new Promise(function (resolve) {
+          if (inputQueue.length > 0) {
+            resolve(inputQueue.shift());
+            return;
+          }
+          waiters.push(resolve);
+        });
+      };
+
+      window.addEventListener("DOMContentLoaded", function () {
+        var stdin = document.getElementById("stdin");
+        if (!stdin) return;
+
+        stdin.addEventListener("keydown", function (event) {
+          if (event.key !== "Enter") return;
+          event.preventDefault();
+
+          var value = stdin.value;
+          stdin.value = "";
+
+          window.appendTerminalText(value + "\n");
+
+          if (typeof window.consumeInputLine === "function") {
+            window.consumeInputLine(value);
+          }
+        });
+
+        stdin.focus();
+      });
+    })();
+  </script>
+
+  {{{ SCRIPT }}}
+</body>
+</html>

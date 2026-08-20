@@ -1,0 +1,87 @@
+Data Query Language (DQL)
+    SELECT
+
+    FROM
+
+    WHERE
+
+    GROUP BY 
+
+    HAVING
+
+    ORDER BY 
+
+    LIMIT
+
+    OFFSET
+
+    DISTINCT
+
+Data Definition Language (DDL)
+    CREATE 
+
+    DROP
+
+    ALTER 
+
+    TABLE 
+
+    DATABASE
+
+    INDEX
+
+    VIEW
+
+Data Manipulation Language (DML)
+    INSERT 
+
+    UPDATE
+
+    DELETE 
+
+    VALUES
+
+    SET
+
+
+
+Operators and Joins
+    AND
+
+    OR
+
+    NOT
+
+    IN
+
+    LIKE
+
+    BETWEEN
+
+    IS NULL
+
+    INNER JOIN 
+
+    LEFT JOIN 
+
+    RIGHT JOIN 
+
+    FULL JOIN 
+
+    ON
+
+    AS
+
+    CASE
+
+    WHEN
+
+    THEN
+
+    ELSE
+
+    END
+
+
+
+    

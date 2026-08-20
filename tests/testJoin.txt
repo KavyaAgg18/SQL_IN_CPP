@@ -1,0 +1,12 @@
+CREATE TABLE departments (id INT PRIMARY KEY, department_name STRING);
+CREATE TABLE employees (id INT PRIMARY KEY, name STRING, department_id INT);
+INSERT INTO departments (id, department_name) VALUES (1, 'HR');
+INSERT INTO departments (id, department_name) VALUES (2, 'Engineering');
+INSERT INTO departments (id, department_name) VALUES (3, 'Marketing');
+INSERT INTO employees (id, name, department_id) VALUES (101, 'Alice', 1);
+INSERT INTO employees (id, name, department_id) VALUES (102, 'Bob', 2);
+INSERT INTO employees (id, name, department_id) VALUES (103, 'Charlie', 2);
+INSERT INTO employees (id, name, department_id) VALUES (104, 'Diana', 3);
+SELECT id, name, department_name FROM employees FULL JOIN departments ON department_id = id;
+SELECT * FROM employees INNER JOIN departments ON department_id = id;
+SELECT id, department_name FROM employees INNER JOIN departments ON department_id = id;
