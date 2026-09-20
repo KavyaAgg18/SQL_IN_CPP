@@ -14,9 +14,11 @@ Value parseValue(const std::string &raw, int datatypeId)
     case 0: // INT
         try { return std::stoi(raw); }
         catch (...) { return raw; } // malformed: keep as string rather than crash
-    case 1: // FLOAT
-        try { return std::stof(raw); }
-        catch (...) { return raw; }
+    case 1: // FLOAT — stored as std::string, not as float, to preserve the exact
+        // on-disk text ("49.50" round-trips; float->string loses trailing zeros).
+        // The float alternative in Value is reserved for future arithmetic use.
+        // Validity was already checked at insert() time, so we trust the raw string here.
+        return raw;
     case 2: // BOOL / BOOLEAN
         // Accept all four forms that insert() validation allows.
         if (raw == "TRUE"  || raw == "1") return true;

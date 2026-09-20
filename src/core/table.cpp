@@ -105,6 +105,33 @@ Row Table::parseRow(const vector<string> &rawFields) const
     return row;
 }
 
+void Table::loadRows()
+{
+    if (rowsLoaded) return; // already cached — skip the disk read
+
+    string filePath = "./Databases/" + db.getName() + "/" + tableName + "/data.csv";
+    ifstream dataFile(filePath);
+    if (!dataFile.is_open())
+    {
+        cerr << RED << "Failed to open data.csv for table " << tableName << RESET << endl;
+        return;
+    }
+
+    string line;
+    while (getline(dataFile, line))
+    {
+        if (line.empty()) continue;
+        stringstream ss(line);
+        string cell;
+        vector<string> rawFields;
+        while (getline(ss, cell, ','))
+            rawFields.push_back(cell);
+        rows.push_back(parseRow(rawFields));
+    }
+    dataFile.close();
+    rowsLoaded = true;
+}
+
 Table selectTable(Database &db, const string &tableName)
 {
     if (tableName.empty())
@@ -284,6 +311,11 @@ void Table::insert(const vector<string> &rowData)
     dataFile << endl;
     dataFile.close();
 
+    // Keep the in-memory cache consistent if it was already populated.
+    // If rowsLoaded is still false, skip — loadRows() will pick this row up lazily.
+    if (rowsLoaded)
+        rows.push_back(parseRow(rowData));
+
     cout << GREEN << "Row added successfully to table " << tableName << "." << RESET << endl;
 }
 
@@ -440,14 +472,20 @@ void Table::insertWithColumns(const vector<string> &columnNames, const vector<st
     dataFile << endl;
     dataFile.close();
 
+    // Keep the in-memory cache consistent if it was already populated.
+    if (rowsLoaded)
+        rows.push_back(parseRow(fullRow));
+
     cout << GREEN << "Row added successfully to table " << tableName << "." << RESET << endl;
 }
 
 void Table::displayTable(const vector<string>& columnNames = {})
 {
+    loadRows(); // populate cache on first call; no-op on subsequent calls
+
     // Sort columns by schema index
     vector<pair<string, pair<int, int>>> sortedColumns(columns.begin(), columns.end());
-    sort(sortedColumns.begin(), sortedColumns.end(), 
+    sort(sortedColumns.begin(), sortedColumns.end(),
          [](const auto& a, const auto& b) { return a.second.first < b.second.first; });
 
     if (sortedColumns.empty())
@@ -456,44 +494,24 @@ void Table::displayTable(const vector<string>& columnNames = {})
         return;
     }
 
-    // Calculate column widths and store data in memory
+    // Convert cached Row objects to display strings and compute column widths.
+    // Using a local displayRows vector keeps the rendering logic identical to before.
     unordered_map<string, size_t> columnWidths;
-    vector<vector<string>> rows; // Store all rows for single-pass reading
     for (const auto &col : sortedColumns)
-    {
-        columnWidths[col.first] = col.first.size(); // Initialize with header size
-    }
+        columnWidths[col.first] = col.first.size();
 
-    string filePath = "./Databases/" + db.getName() + "/" + tableName + "/data.csv";
-    ifstream dataFile(filePath);
-    if (!dataFile.is_open())
+    vector<vector<string>> displayRows;
+    for (const auto &row : rows)
     {
-        cerr << RED << "Failed to open data.csv for table " << tableName << RESET << endl;
-        return;
-    }
-
-    string line;
-    while (getline(dataFile, line))
-    {
-        stringstream ss(line);
-        string cell;
-        vector<string> row;
-        for (const auto &col : sortedColumns)
+        vector<string> displayRow;
+        for (size_t i = 0; i < sortedColumns.size(); ++i)
         {
-            if (getline(ss, cell, ','))
-            {
-                row.push_back(cell);
-                columnWidths[col.first] = max(columnWidths[col.first], cell.size());
-            }
-            else
-            {
-                row.push_back("NULL"); // Handle missing fields
-                columnWidths[col.first] = max(columnWidths[col.first], string("NULL").size());
-            }
+            string cell = (i < row.cells.size()) ? valueToString(row.cells[i]) : "NULL";
+            columnWidths[sortedColumns[i].first] = max(columnWidths[sortedColumns[i].first], cell.size());
+            displayRow.push_back(cell);
         }
-        rows.push_back(row);
+        displayRows.push_back(displayRow);
     }
-    dataFile.close();
 
     // Display header
     for (const auto &col : sortedColumns)
@@ -516,7 +534,7 @@ void Table::displayTable(const vector<string>& columnNames = {})
     cout << "+\n";
 
     // Display data
-    if (rows.empty())
+    if (displayRows.empty())
     {
         // Calculate total width for a single centered message
         size_t totalWidth = 0;
@@ -535,7 +553,7 @@ void Table::displayTable(const vector<string>& columnNames = {})
     }
     else
     {
-        for (const auto &row : rows)
+        for (const auto &row : displayRows)
         {
             for (size_t i = 0; i < sortedColumns.size(); ++i)
             {
@@ -653,6 +671,12 @@ void truncate(Database& db, const string& tableName) {
         return;
     }
 
+    // Known limitation: this free function takes Database&/name, not Table&, so it
+    // cannot reach a live Table object's in-memory cache. Any Table object that loaded
+    // rows before this truncate will hold stale data for the rest of the session.
+    // A fresh selectTable() call constructs a new Table with rowsLoaded=false, so it
+    // re-reads the now-empty data.csv correctly. Fixing this would require a shared
+    // cache or passing a Table& — out of scope for this pass.
     string tablePath = "./Databases/" + db.getName() + "/" + tableName + "/data.csv";
     ofstream dataFile(tablePath);
     dataFile.close();

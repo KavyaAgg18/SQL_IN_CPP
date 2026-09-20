@@ -19,11 +19,18 @@ private:
     // column schema. Used by loadRows() (Phase 2) and buildIndex() (Phase 3).
     Row parseRow(const vector<string> &rawFields) const;
 
+    vector<Row> rows;       // in-memory row cache populated by loadRows()
+    bool rowsLoaded = false; // guards against redundant disk reads within a session
+
 public:
     unordered_map<string, pair<int, int>> columns; // column name -> (index, datatype ID)
     Table();
     Table(Database &db, string tableName = "", const vector<string> &columnName = {}, const vector<string> &type = {});
     string getName() const { return tableName; }
+
+    // Loads data.csv into the in-memory rows cache (no-op if already loaded).
+    // Called by displayTable() and, starting Phase 3, by buildIndex().
+    void loadRows();
 
     void insert(const vector<string> &rowData);
     void insertWithColumns(const vector<string> &columnNames, const vector<string> &rowData);
