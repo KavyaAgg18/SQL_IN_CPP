@@ -87,6 +87,24 @@ Table::Table(Database &db, string tableName, const vector<string> &columnName, c
     cout << GREEN << "Table " << tableName << " created successfully." << RESET << endl;
 }
 
+Row Table::parseRow(const vector<string> &rawFields) const
+{
+    // Sort columns by schema index so cells end up in the same order as the CSV.
+    vector<pair<string, pair<int, int>>> sorted(columns.begin(), columns.end());
+    sort(sorted.begin(), sorted.end(),
+         [](const auto &a, const auto &b) { return a.second.first < b.second.first; });
+
+    Row row;
+    row.cells.reserve(sorted.size());
+    for (size_t i = 0; i < sorted.size(); ++i)
+    {
+        int typeId = sorted[i].second.second;
+        const string &raw = (i < rawFields.size()) ? rawFields[i] : "NULL";
+        row.cells.push_back(parseValue(raw, typeId));
+    }
+    return row;
+}
+
 Table selectTable(Database &db, const string &tableName)
 {
     if (tableName.empty())

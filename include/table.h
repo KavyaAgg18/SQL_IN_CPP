@@ -2,6 +2,7 @@
 #define TABLE_H
 
 #include "database.h"
+#include "value.h"
 #include <unordered_map>
 #include <vector>
 #include <string>
@@ -13,6 +14,10 @@ class Table
 private:
     Database &db;
     string tableName; // Table name
+
+    // Converts a flat CSV-split field vector into a typed Row using this table's
+    // column schema. Used by loadRows() (Phase 2) and buildIndex() (Phase 3).
+    Row parseRow(const vector<string> &rawFields) const;
 
 public:
     unordered_map<string, pair<int, int>> columns; // column name -> (index, datatype ID)

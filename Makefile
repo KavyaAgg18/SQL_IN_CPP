@@ -48,6 +48,7 @@ SRC = src/caller/main.cpp \
     src/core/globals.cpp \
     src/core/database.cpp \
     src/core/table.cpp \
+    src/core/value.cpp \
     src/handlers/sqlparser.cpp \
     src/handlers/join.cpp
 OBJ = $(SRC:.cpp=.o)
