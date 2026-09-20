@@ -228,20 +228,19 @@ void SQLParser::executeQuery(Database &db, const string &query)
             Table table2 = selectTable(db, table2Name);
             if (joinType == "INNER")
             {
-                innerJoin(db, table1, table2, joinColumns);
+                innerJoin(db, table1, table2, joinColumns, columnNames);
             }
-            
             else if (joinType == "RIGHT")
             {
-                rightJoin(db, table1, table2, joinColumns);
+                rightJoin(db, table1, table2, joinColumns, columnNames);
             }
             else if (joinType == "LEFT")
             {
-                leftJoin(db, table1, table2, joinColumns);
+                leftJoin(db, table1, table2, joinColumns, columnNames);
             }
             else if (joinType == "FULL")
             {
-                fullJoin(db, table1, table2, joinColumns);
+                fullJoin(db, table1, table2, joinColumns, columnNames);
             }
             // else if(joinType == "CROSS")
             // {

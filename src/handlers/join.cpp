@@ -12,7 +12,8 @@ using namespace std;
 
 // INNER JOIN
 // O(n + m) via hash index on the smaller table's join column, replacing the previous O(n*m) nested scan.
-void innerJoin(Database &db, Table &table1, Table &table2, const vector<string> &joinColumns)
+void innerJoin(Database &db, Table &table1, Table &table2, const vector<string> &joinColumns,
+               const vector<string> &projectedColumns)
 {
     if (joinColumns.size() < 2)
     {
@@ -108,13 +109,14 @@ void innerJoin(Database &db, Table &table1, Table &table2, const vector<string> 
     }
 
     cout << "Inner Join Result:" << endl;
-    joinedTable.displayTable(vector<string>());
+    joinedTable.displayTable(projectedColumns);
     drop(db, "temp_joined_table");
 }
 
 // RIGHT JOIN
 // O(n + m) via hash index on table1's join column; scans table2 as the driving side.
-void rightJoin(Database &db, Table &table1, Table &table2, const vector<string> &joinColumns)
+void rightJoin(Database &db, Table &table1, Table &table2, const vector<string> &joinColumns,
+               const vector<string> &projectedColumns)
 {
     if (joinColumns.size() < 2)
     {
@@ -213,13 +215,14 @@ void rightJoin(Database &db, Table &table1, Table &table2, const vector<string> 
     }
 
     cout << "Right Join Result:" << endl;
-    joinedTable.displayTable(vector<string>());
+    joinedTable.displayTable(projectedColumns);
     drop(db, "temp_joined_table");
 }
 
 // LEFT JOIN
 // O(n + m) via hash index on table2's join column; scans table1 as the driving side.
-void leftJoin(Database &db, Table &table1, Table &table2, const vector<string> &joinColumns)
+void leftJoin(Database &db, Table &table1, Table &table2, const vector<string> &joinColumns,
+              const vector<string> &projectedColumns)
 {
     if (joinColumns.size() < 2)
     {
@@ -321,13 +324,14 @@ void leftJoin(Database &db, Table &table1, Table &table2, const vector<string> &
     }
 
     cout << "Left Join Result:" << endl;
-    joinedTable.displayTable(vector<string>());
+    joinedTable.displayTable(projectedColumns);
     drop(db, "temp_joined_table");
 }
 
 // FULL JOIN
 // O(n + m) via hash index on table2's join column; unmatched rows from both sides are emitted.
-void fullJoin(Database &db, Table &table1, Table &table2, const vector<string> &joinColumns)
+void fullJoin(Database &db, Table &table1, Table &table2, const vector<string> &joinColumns,
+              const vector<string> &projectedColumns)
 {
     if (joinColumns.size() < 2)
     {
@@ -448,6 +452,6 @@ void fullJoin(Database &db, Table &table1, Table &table2, const vector<string> &
     }
 
     cout << "Full Join Result:" << endl;
-    joinedTable.displayTable(vector<string>());
+    joinedTable.displayTable(projectedColumns);
     drop(db, "temp_joined_table");
 }
