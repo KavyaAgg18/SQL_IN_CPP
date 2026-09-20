@@ -25,8 +25,5 @@ void fullJoin(Database &db, Table &table1, Table &table2,
               const vector<string> &joinColumns,
               const vector<string> &projectedColumns);
 
-// void crossJoin(Database &db, Table &table1, Table &table2);
-
-// void selfJoin(Database &db, Table &tableName, const vector<string> &joinColumns);
 
 #endif // JOIN_H

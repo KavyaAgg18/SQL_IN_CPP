@@ -242,10 +242,6 @@ void SQLParser::executeQuery(Database &db, const string &query)
             {
                 fullJoin(db, table1, table2, joinColumns, columnNames);
             }
-            // else if(joinType == "CROSS")
-            // {
-            //     crossJoin(db, table1, table2);
-            // }
             else
             {
                 cerr << "Invalid JOIN type: " << joinType << "\n";
