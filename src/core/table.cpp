@@ -548,8 +548,10 @@ void Table::displayTable(const vector<string>& columnNames = {})
         totalWidth -= 1; // Remove extra separator at the end
 
         string message = "No data in table " + tableName;
-        size_t padding = totalWidth > message.size() ? (totalWidth - message.size()) / 2 : 0;
-        cout << "|" << string(padding, ' ') << message << string(totalWidth - message.size() - padding, ' ') << "|\n";
+        // Guard against unsigned underflow when message is wider than the table display.
+        size_t padding  = totalWidth > message.size() ? (totalWidth - message.size()) / 2 : 0;
+        size_t rightPad = (totalWidth > message.size() + padding) ? totalWidth - message.size() - padding : 0;
+        cout << "|" << string(padding, ' ') << message << string(rightPad, ' ') << "|\n";
     }
     else
     {
