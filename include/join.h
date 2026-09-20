@@ -6,6 +6,8 @@
 #include "database.h"
 #include "table.h"
 
+enum class JoinType { INNER, LEFT, RIGHT, FULL };
+
 // Function declarations
 vector<vector<string>> loadTableDataFromFile(const string &filePath, vector<string> &columns);
 
