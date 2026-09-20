@@ -34,4 +34,17 @@ std::string valueToString(const Value &v);
 // is sufficient for hash-join correctness and avoids silent type coercion bugs.
 bool valuesEqual(const Value &a, const Value &b);
 
+// Hasher for Value so it can be used as an unordered_map key (Phase 3 buildIndex).
+// Mixes the variant type index into the hash to prevent cross-type collisions
+// (e.g. int(1) and bool(true) would otherwise both hash to ~1).
+struct ValueHash {
+    std::size_t operator()(const Value &v) const {
+        std::size_t h = std::visit([](const auto &val) -> std::size_t {
+            return std::hash<std::decay_t<decltype(val)>>{}(val);
+        }, v);
+        // Multiply type index by a large prime before XOR to spread bits.
+        return h ^ (v.index() * 2654435761ULL);
+    }
+};
+
 #endif // VALUE_H

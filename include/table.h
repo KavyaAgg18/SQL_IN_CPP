@@ -29,8 +29,16 @@ public:
     string getName() const { return tableName; }
 
     // Loads data.csv into the in-memory rows cache (no-op if already loaded).
-    // Called by displayTable() and, starting Phase 3, by buildIndex().
+    // Called by displayTable() and buildIndex().
     void loadRows();
+
+    // Read-only access to the row cache for join scanning (Phase 3).
+    const vector<Row> &getRows() const { return rows; }
+
+    // Builds a hash index mapping each value in colName to the list of row
+    // indices in rows[] that share that value. O(n) build, O(1) average lookup.
+    // Calls loadRows() internally so callers don't need to.
+    unordered_map<Value, vector<int>, ValueHash> buildIndex(const string &colName);
 
     void insert(const vector<string> &rowData);
     void insertWithColumns(const vector<string> &columnNames, const vector<string> &rowData);

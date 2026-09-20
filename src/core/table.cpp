@@ -105,6 +105,28 @@ Row Table::parseRow(const vector<string> &rawFields) const
     return row;
 }
 
+unordered_map<Value, vector<int>, ValueHash> Table::buildIndex(const string &colName)
+{
+    loadRows(); // ensure cache is warm
+
+    auto it = columns.find(colName);
+    if (it == columns.end())
+    {
+        cerr << RED << "buildIndex: column '" << colName << "' not found in " << tableName << RESET << endl;
+        return {};
+    }
+    int colIdx = it->second.first; // schema index
+
+    unordered_map<Value, vector<int>, ValueHash> index;
+    index.reserve(rows.size());
+    for (int i = 0; i < static_cast<int>(rows.size()); ++i)
+    {
+        if (colIdx < static_cast<int>(rows[i].cells.size()))
+            index[rows[i].cells[colIdx]].push_back(i);
+    }
+    return index;
+}
+
 void Table::loadRows()
 {
     if (rowsLoaded) return; // already cached — skip the disk read
