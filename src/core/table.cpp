@@ -501,7 +501,54 @@ void Table::insertWithColumns(const vector<string> &columnNames, const vector<st
     cout << GREEN << "Row added successfully to table " << tableName << "." << RESET << endl;
 }
 
-void Table::displayTable(const vector<string>& columnNames = {})
+static bool evaluateWhere(const Row &row,
+                          const unordered_map<string, pair<int,int>> &columns,
+                          const WhereClause &where)
+{
+    auto it = columns.find(where.column);
+    if (it == columns.end()) {
+        cerr << RED << "WHERE: column '" << where.column << "' not found" << RESET << endl;
+        return false;
+    }
+    int colIdx = it->second.first;
+    int typeId = it->second.second;
+
+    if (colIdx >= static_cast<int>(row.cells.size())) return false;
+
+    const Value &cell = row.cells[colIdx];
+    Value comparand   = parseValue(where.rawValue, typeId);
+    const string &op  = where.op;
+
+    if (op == "=" || op == "==")  return valuesEqual(cell, comparand);
+    if (op == "!=" || op == "<>") return !valuesEqual(cell, comparand);
+
+    // INT: native numeric comparison.
+    if (holds_alternative<int>(cell) && holds_alternative<int>(comparand)) {
+        int a = get<int>(cell), b = get<int>(comparand);
+        if (op == "<")  return a < b;
+        if (op == ">")  return a > b;
+        if (op == "<=") return a <= b;
+        if (op == ">=") return a >= b;
+    }
+
+    // FLOAT (stored as string) and STRING: attempt numeric, fall back to lexicographic.
+    string cellStr = valueToString(cell);
+    try {
+        double a = stod(cellStr), b = stod(where.rawValue);
+        if (op == "<")  return a < b;
+        if (op == ">")  return a > b;
+        if (op == "<=") return a <= b;
+        if (op == ">=") return a >= b;
+    } catch (...) {
+        if (op == "<")  return cellStr < where.rawValue;
+        if (op == ">")  return cellStr > where.rawValue;
+        if (op == "<=") return cellStr <= where.rawValue;
+        if (op == ">=") return cellStr >= where.rawValue;
+    }
+    return false;
+}
+
+void Table::displayTable(const vector<string>& columnNames, const WhereClause *where)
 {
     loadRows(); // populate cache on first call; no-op on subsequent calls
 
@@ -525,6 +572,8 @@ void Table::displayTable(const vector<string>& columnNames = {})
     vector<vector<string>> displayRows;
     for (const auto &row : rows)
     {
+        if (where && !evaluateWhere(row, columns, *where)) continue;
+
         vector<string> displayRow;
         for (size_t i = 0; i < sortedColumns.size(); ++i)
         {
@@ -569,7 +618,8 @@ void Table::displayTable(const vector<string>& columnNames = {})
         }
         totalWidth -= 1; // Remove extra separator at the end
 
-        string message = "No data in table " + tableName;
+        string message = where ? "No rows match WHERE condition"
+                               : "No data in table " + tableName;
         // Guard against unsigned underflow when message is wider than the table display.
         size_t padding  = totalWidth > message.size() ? (totalWidth - message.size()) / 2 : 0;
         size_t rightPad = (totalWidth > message.size() + padding) ? totalWidth - message.size() - padding : 0;

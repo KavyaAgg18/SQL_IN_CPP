@@ -9,6 +9,12 @@
 
 using namespace std;
 
+struct WhereClause {
+    std::string column;
+    std::string op;       // "=", "!=", "<>", "<", ">", "<=", ">="
+    std::string rawValue; // literal from the query, quotes already stripped
+};
+
 class Table
 {
 private:
@@ -42,7 +48,7 @@ public:
 
     void insert(const vector<string> &rowData);
     void insertWithColumns(const vector<string> &columnNames, const vector<string> &rowData);
-    void displayTable(const vector<string> &columnNames);
+    void displayTable(const vector<string> &columnNames, const WhereClause *where = nullptr);
 };
 
 void create(Database &db, const string &tableName, const vector<string> &columns, const vector<string> &types);

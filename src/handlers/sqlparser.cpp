@@ -270,7 +270,22 @@ void SQLParser::executeQuery(Database &db, const string &query)
             return;
         }
 
-        table.displayTable(columnNames);
+        // Parse optional WHERE clause: WHERE col OP value
+        WhereClause wc;
+        const WhereClause *wherePtr = nullptr;
+        if (temp == "WHERE")
+        {
+            string col, op, val;
+            ss >> col >> op >> val;
+            col = toLowerCase(col);
+            if (!val.empty() && val.back() == ';') val.pop_back();
+            if (val.size() >= 2 && val.front() == '\'' && val.back() == '\'')
+                val = val.substr(1, val.size() - 2);
+            wc = {col, op, val};
+            wherePtr = &wc;
+        }
+
+        table.displayTable(columnNames, wherePtr);
     }
     else if (command == "RENAME")
     {
